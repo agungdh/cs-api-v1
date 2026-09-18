@@ -12,7 +12,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// HTTPS redirection ditangani oleh nginx reverse proxy (TLS termination),
+// jadi tidak dilakukan di aplikasi untuk menghindari redirect loop.
 
 var summaries = new[]
 {
