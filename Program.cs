@@ -1,10 +1,15 @@
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using cs_api_v1.Data;
+using cs_api_v1.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
@@ -17,6 +22,8 @@ if (app.Environment.IsDevelopment())
 
 // HTTPS redirection ditangani oleh nginx reverse proxy (TLS termination),
 // jadi tidak dilakukan di aplikasi untuk menghindari redirect loop.
+
+app.MapProductEndpoints();
 
 var summaries = new[]
 {
