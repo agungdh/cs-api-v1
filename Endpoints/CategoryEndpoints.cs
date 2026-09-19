@@ -19,15 +19,15 @@ public static class CategoryEndpoints
 
             var items = await query
                 .OrderBy(c => c.Name)
-                .Select(c => new CategoryResponse(c.Id, c.Name, c.Description, c.CreatedAt, c.UpdatedAt))
+                .Select(c => new CategoryResponse(c.Uuid, c.Name, c.Description, c.CreatedAt, c.UpdatedAt))
                 .ToListAsync();
 
             return Results.Ok(items);
         }).WithName("ListCategories");
 
-        group.MapGet("/{id:guid}", async (Guid id, AppDbContext db) =>
+        group.MapGet("/{uuid:guid}", async (Guid uuid, AppDbContext db) =>
         {
-            var category = await db.Categories.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
+            var category = await db.Categories.AsNoTracking().FirstOrDefaultAsync(c => c.Uuid == uuid);
             return category is null
                 ? Results.NotFound()
                 : Results.Ok(ToResponse(category));
@@ -45,7 +45,6 @@ public static class CategoryEndpoints
             var now = DateTime.UtcNow;
             var category = new Category
             {
-                Id = Guid.NewGuid(),
                 Name = req.Name.Trim(),
                 Description = string.IsNullOrWhiteSpace(req.Description) ? null : req.Description.Trim(),
                 CreatedAt = now,
@@ -55,16 +54,16 @@ public static class CategoryEndpoints
             db.Categories.Add(category);
             await db.SaveChangesAsync();
 
-            return Results.Created($"/api/categories/{category.Id}", ToResponse(category));
+            return Results.Created($"/api/categories/{category.Uuid}", ToResponse(category));
         }).WithName("CreateCategory");
 
-        group.MapPut("/{id:guid}", async (Guid id, UpdateCategoryRequest req, AppDbContext db) =>
+        group.MapPut("/{uuid:guid}", async (Guid uuid, UpdateCategoryRequest req, AppDbContext db) =>
         {
             var errors = Validate(req.Name);
             if (errors.Count > 0)
                 return Results.ValidationProblem(errors);
 
-            var category = await db.Categories.FirstOrDefaultAsync(c => c.Id == id);
+            var category = await db.Categories.FirstOrDefaultAsync(c => c.Uuid == uuid);
             if (category is null)
                 return Results.NotFound();
 
@@ -76,9 +75,9 @@ public static class CategoryEndpoints
             return Results.Ok(ToResponse(category));
         }).WithName("UpdateCategory");
 
-        group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db) =>
+        group.MapDelete("/{uuid:guid}", async (Guid uuid, AppDbContext db) =>
         {
-            var category = await db.Categories.Include(c => c.Products).FirstOrDefaultAsync(c => c.Id == id);
+            var category = await db.Categories.Include(c => c.Products).FirstOrDefaultAsync(c => c.Uuid == uuid);
             if (category is null)
                 return Results.NotFound();
             if (category.Products.Count > 0)
@@ -93,7 +92,7 @@ public static class CategoryEndpoints
     }
 
     private static CategoryResponse ToResponse(Category c) =>
-        new(c.Id, c.Name, c.Description, c.CreatedAt, c.UpdatedAt);
+        new(c.Uuid, c.Name, c.Description, c.CreatedAt, c.UpdatedAt);
 
     private static Dictionary<string, string[]> Validate(string name)
     {

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using cs_api_v1.Data;
@@ -11,9 +12,11 @@ using cs_api_v1.Data;
 namespace cs_api_v1.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260919073924_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,7 +34,7 @@ namespace cs_api_v1.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("CreatedAt")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
@@ -46,7 +49,7 @@ namespace cs_api_v1.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
-                    b.Property<DateTime?>("UpdatedAt")
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
@@ -64,9 +67,8 @@ namespace cs_api_v1.Migrations
                         .HasDatabaseName("ix_categories_name");
 
                     b.HasIndex("Uuid")
+                        .IsUnique()
                         .HasDatabaseName("ix_categories_uuid");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Uuid"), "hash");
 
                     b.ToTable("categories", (string)null);
                 });
@@ -84,7 +86,7 @@ namespace cs_api_v1.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("category_id");
 
-                    b.Property<DateTime?>("CreatedAt")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
@@ -108,7 +110,7 @@ namespace cs_api_v1.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("stock");
 
-                    b.Property<DateTime?>("UpdatedAt")
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
@@ -128,9 +130,8 @@ namespace cs_api_v1.Migrations
                         .HasDatabaseName("ix_products_name");
 
                     b.HasIndex("Uuid")
+                        .IsUnique()
                         .HasDatabaseName("ix_products_uuid");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Uuid"), "hash");
 
                     b.ToTable("products", (string)null);
                 });

@@ -12,8 +12,8 @@ using cs_api_v1.Data;
 namespace cs_api_v1.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260919061829_UseSnakeCase")]
-    partial class UseSnakeCase
+    [Migration("20260919122623_NullableAuditHashUuid")]
+    partial class NullableAuditHashUuid
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,13 +27,14 @@ namespace cs_api_v1.Migrations
 
             modelBuilder.Entity("cs_api_v1.Models.Category", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
 
-                    b.Property<DateTime>("CreatedAt")
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
@@ -48,9 +49,15 @@ namespace cs_api_v1.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
+
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
 
                     b.HasKey("Id")
                         .HasName("pk_categories");
@@ -59,22 +66,28 @@ namespace cs_api_v1.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_categories_name");
 
+                    b.HasIndex("Uuid")
+                        .HasDatabaseName("ix_categories_uuid");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Uuid"), "hash");
+
                     b.ToTable("categories", (string)null);
                 });
 
             modelBuilder.Entity("cs_api_v1.Models.Product", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
 
-                    b.Property<Guid?>("CategoryId")
-                        .HasColumnType("uuid")
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("integer")
                         .HasColumnName("category_id");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
@@ -98,9 +111,15 @@ namespace cs_api_v1.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("stock");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
+
+                    b.Property<Guid>("Uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
 
                     b.HasKey("Id")
                         .HasName("pk_products");
@@ -110,6 +129,11 @@ namespace cs_api_v1.Migrations
 
                     b.HasIndex("Name")
                         .HasDatabaseName("ix_products_name");
+
+                    b.HasIndex("Uuid")
+                        .HasDatabaseName("ix_products_uuid");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Uuid"), "hash");
 
                     b.ToTable("products", (string)null);
                 });

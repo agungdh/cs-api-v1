@@ -1,28 +1,28 @@
 namespace cs_api_v1.Dtos;
 
 public record ProductResponse(
-    Guid Id,
+    Guid Uuid,
     string Name,
     string? Description,
     decimal Price,
     int Stock,
-    Guid? CategoryId,
+    Guid? CategoryUuid,
     string? CategoryName,
-    DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime? CreatedAt,
+    DateTime? UpdatedAt);
 
 public record CreateProductRequest(
     string Name,
     string? Description,
     decimal Price,
     int Stock,
-    Guid? CategoryId);
+    Guid? CategoryUuid);
 
 public record UpdateProductRequest(
     string Name,
     string? Description,
     decimal Price,
     int Stock,
-    Guid? CategoryId);
+    Guid? CategoryUuid);
 
 public record PagedResponse<T>(IReadOnlyList<T> Items, int Total, int Page, int PageSize);

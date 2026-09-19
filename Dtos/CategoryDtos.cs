@@ -1,11 +1,11 @@
 namespace cs_api_v1.Dtos;
 
 public record CategoryResponse(
-    Guid Id,
+    Guid Uuid,
     string Name,
     string? Description,
-    DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime? CreatedAt,
+    DateTime? UpdatedAt);
 
 public record CreateCategoryRequest(
     string Name,

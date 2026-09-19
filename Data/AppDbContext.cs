@@ -14,9 +14,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.ToTable("categories");
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+            entity.Property(e => e.Uuid)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .IsRequired();
             entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.HasIndex(e => e.Uuid).HasMethod("hash");
             entity.HasIndex(e => e.Name).IsUnique();
         });
 
@@ -24,10 +28,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.ToTable("products");
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+            entity.Property(e => e.Uuid)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .IsRequired();
             entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.Property(e => e.Price).HasPrecision(18, 2);
+            entity.HasIndex(e => e.Uuid).HasMethod("hash");
             entity.HasIndex(e => e.Name);
             entity.HasIndex(e => e.CategoryId);
 
