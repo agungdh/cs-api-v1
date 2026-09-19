@@ -24,6 +24,7 @@ if (app.Environment.IsDevelopment())
 // jadi tidak dilakukan di aplikasi untuk menghindari redirect loop.
 
 app.MapProductEndpoints();
+app.MapCategoryEndpoints();
 
 var summaries = new[]
 {

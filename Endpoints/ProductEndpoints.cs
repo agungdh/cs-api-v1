@@ -14,15 +14,18 @@ public static class ProductEndpoints
         group.MapGet("/", async (
             AppDbContext db,
             string? search,
+            Guid? categoryId,
             int page = 1,
             int pageSize = 10) =>
         {
             page = Math.Max(page, 1);
             pageSize = Math.Clamp(pageSize, 1, 100);
 
-            var query = db.Products.AsNoTracking();
+            var query = db.Products.AsNoTracking().Include(p => p.Category).AsQueryable();
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(p => EF.Functions.ILike(p.Name, $"%{search}%"));
+            if (categoryId is not null)
+                query = query.Where(p => p.CategoryId == categoryId);
 
             var total = await query.CountAsync();
             var items = await query
@@ -30,7 +33,9 @@ public static class ProductEndpoints
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(p => new ProductResponse(
-                    p.Id, p.Name, p.Description, p.Price, p.Stock, p.CreatedAt, p.UpdatedAt))
+                    p.Id, p.Name, p.Description, p.Price, p.Stock,
+                    p.CategoryId, p.Category != null ? p.Category.Name : null,
+                    p.CreatedAt, p.UpdatedAt))
                 .ToListAsync();
 
             return Results.Ok(new PagedResponse<ProductResponse>(items, total, page, pageSize));
@@ -38,7 +43,7 @@ public static class ProductEndpoints
 
         group.MapGet("/{id:guid}", async (Guid id, AppDbContext db) =>
         {
-            var product = await db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
+            var product = await db.Products.AsNoTracking().Include(p => p.Category).FirstOrDefaultAsync(p => p.Id == id);
             return product is null
                 ? Results.NotFound()
                 : Results.Ok(ToResponse(product));
@@ -50,6 +55,17 @@ public static class ProductEndpoints
             if (errors.Count > 0)
                 return Results.ValidationProblem(errors);
 
+            Category? category = null;
+            if (req.CategoryId is not null)
+            {
+                category = await db.Categories.FirstOrDefaultAsync(c => c.Id == req.CategoryId);
+                if (category is null)
+                    return Results.ValidationProblem(new Dictionary<string, string[]>
+                    {
+                        ["categoryId"] = ["Category tidak ditemukan."]
+                    });
+            }
+
             var now = DateTime.UtcNow;
             var product = new Product
             {
@@ -58,6 +74,7 @@ public static class ProductEndpoints
                 Description = string.IsNullOrWhiteSpace(req.Description) ? null : req.Description.Trim(),
                 Price = req.Price,
                 Stock = req.Stock,
+                CategoryId = req.CategoryId,
                 CreatedAt = now,
                 UpdatedAt = now,
             };
@@ -65,6 +82,7 @@ public static class ProductEndpoints
             db.Products.Add(product);
             await db.SaveChangesAsync();
 
+            product.Category = category;
             return Results.Created($"/api/products/{product.Id}", ToResponse(product));
         }).WithName("CreateProduct");
 
@@ -78,13 +96,25 @@ public static class ProductEndpoints
             if (product is null)
                 return Results.NotFound();
 
+            if (req.CategoryId is not null)
+            {
+                var exists = await db.Categories.AnyAsync(c => c.Id == req.CategoryId);
+                if (!exists)
+                    return Results.ValidationProblem(new Dictionary<string, string[]>
+                    {
+                        ["categoryId"] = ["Category tidak ditemukan."]
+                    });
+            }
+
             product.Name = req.Name.Trim();
             product.Description = string.IsNullOrWhiteSpace(req.Description) ? null : req.Description.Trim();
             product.Price = req.Price;
             product.Stock = req.Stock;
+            product.CategoryId = req.CategoryId;
             product.UpdatedAt = DateTime.UtcNow;
 
             await db.SaveChangesAsync();
+            await db.Entry(product).Reference(p => p.Category).LoadAsync();
             return Results.Ok(ToResponse(product));
         }).WithName("UpdateProduct");
 
@@ -98,7 +128,8 @@ public static class ProductEndpoints
     }
 
     private static ProductResponse ToResponse(Product p) =>
-        new(p.Id, p.Name, p.Description, p.Price, p.Stock, p.CreatedAt, p.UpdatedAt);
+        new(p.Id, p.Name, p.Description, p.Price, p.Stock,
+            p.CategoryId, p.Category?.Name, p.CreatedAt, p.UpdatedAt);
 
     private static Dictionary<string, string[]> Validate(string name, decimal price, int stock)
     {
