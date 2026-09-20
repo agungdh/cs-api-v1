@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using cs_api_v1.Models;
+using cs_api_v1.Entities;
 
 namespace cs_api_v1.Data.Configs;
 
@@ -24,7 +24,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         e.HasIndex(x => x.CategoryId);
 
         e.HasOne(x => x.Category)
-            .WithMany(c => c.Products)
+            .WithMany()
             .HasForeignKey(x => x.CategoryId)
             .OnDelete(DeleteBehavior.SetNull);
     }

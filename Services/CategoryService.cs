@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using cs_api_v1.Common.Exceptions;
 using cs_api_v1.Data;
 using cs_api_v1.Dtos;
-using cs_api_v1.Models;
+using cs_api_v1.Entities;
 using cs_api_v1.Services.Common;
 
 namespace cs_api_v1.Services;

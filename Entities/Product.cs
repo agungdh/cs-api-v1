@@ -1,4 +1,4 @@
-namespace cs_api_v1.Models;
+namespace cs_api_v1.Entities;
 
 public class Product : BaseEntity
 {

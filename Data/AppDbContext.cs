@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using cs_api_v1.Models;
+using cs_api_v1.Entities;
 
 namespace cs_api_v1.Data;
 
