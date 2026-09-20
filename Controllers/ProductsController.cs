@@ -11,12 +11,12 @@ namespace cs_api_v1.Controllers;
 public class ProductsController(IProductService products) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<PagedResponse<ProductResponse>>> List(
+    public async Task<ActionResult<CursorResponse<ProductResponse>>> List(
         [FromQuery] string? search,
         [FromQuery] Guid? categoryUuid,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10) =>
-        Ok(await products.ListAsync(search, categoryUuid, page, pageSize));
+        [FromQuery] string? cursor,
+        [FromQuery] int limit = 10) =>
+        Ok(await products.ListAsync(search, categoryUuid, cursor, limit));
 
     [HttpGet("{uuid:guid}")]
     public async Task<ActionResult<ProductResponse>> Get(Guid uuid) =>

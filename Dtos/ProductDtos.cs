@@ -24,5 +24,3 @@ public record UpdateProductRequest(
     decimal Price,
     int Stock,
     Guid? CategoryUuid);
-
-public record PagedResponse<T>(IReadOnlyList<T> Items, int Total, int Page, int PageSize);

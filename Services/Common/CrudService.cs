@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using cs_api_v1.Common.Exceptions;
 using cs_api_v1.Data;
@@ -53,4 +54,50 @@ public abstract class CrudService<TEntity>(AppDbContext db)
 
     protected static (int page, int pageSize) NormalizePaging(int page, int pageSize) =>
         (Math.Max(page, 1), Math.Clamp(pageSize, 1, 100));
+
+    // --- Cursor pagination (infinite scroll) ---
+    // Keyset di Id int (selalu naik, deterministik), cursor opaque base64
+    // supaya id internal tidak bocor ke FE. Urutan: terbaru dulu (id DESC).
+    // Ambil limit+1 baris untuk tahu masih ada halaman berikut atau tidak.
+    protected static async Task<CursorResponse<TResponse>> ToCursorPageAsync<TResponse>(
+        IQueryable<TEntity> query,
+        string? cursor,
+        int limit,
+        Func<TEntity, TResponse> map)
+    {
+        limit = Math.Clamp(limit, 1, 100);
+
+        if (TryDecodeCursor(cursor, out var lastId))
+            query = query.Where(e => e.Id < lastId);
+
+        var entities = await query
+            .OrderByDescending(e => e.Id)
+            .Take(limit + 1)
+            .ToListAsync();
+
+        var hasMore = entities.Count > limit;
+        var items = entities.Take(limit).Select(map).ToList();
+        string? nextCursor = hasMore ? EncodeCursor(entities[limit - 1].Id) : null;
+
+        return new CursorResponse<TResponse>(items, nextCursor, hasMore);
+    }
+
+    protected static string EncodeCursor(int id) =>
+        Convert.ToBase64String(Encoding.UTF8.GetBytes(id.ToString()));
+
+    protected static bool TryDecodeCursor(string? cursor, out int id)
+    {
+        id = 0;
+        if (string.IsNullOrWhiteSpace(cursor))
+            return false;
+        try
+        {
+            var decoded = Encoding.UTF8.GetString(Convert.FromBase64String(cursor));
+            return int.TryParse(decoded, out id) && id > 0;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
 }

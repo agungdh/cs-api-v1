@@ -9,7 +9,7 @@ namespace cs_api_v1.Services;
 
 public interface IProductService
 {
-    Task<PagedResponse<ProductResponse>> ListAsync(string? search, Guid? categoryUuid, int page, int pageSize);
+    Task<CursorResponse<ProductResponse>> ListAsync(string? search, Guid? categoryUuid, string? cursor, int limit);
     Task<ProductResponse> GetAsync(Guid uuid);
     Task<ProductResponse> CreateAsync(CreateProductRequest req);
     Task<ProductResponse> UpdateAsync(Guid uuid, UpdateProductRequest req);
@@ -23,29 +23,15 @@ public class ProductService(AppDbContext db) : CrudService<Product>(db), IProduc
     protected override IQueryable<Product> Query() =>
         Db.Products.AsNoTracking().Include(p => p.Category);
 
-    public async Task<PagedResponse<ProductResponse>> ListAsync(string? search, Guid? categoryUuid, int page, int pageSize)
+    public async Task<CursorResponse<ProductResponse>> ListAsync(string? search, Guid? categoryUuid, string? cursor, int limit)
     {
-        (page, pageSize) = NormalizePaging(page, pageSize);
-
         var query = Query().AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(p => EF.Functions.ILike(p.Name, $"%{search}%"));
         if (categoryUuid is not null)
             query = query.Where(p => p.Category != null && p.Category.Uuid == categoryUuid);
 
-        var total = await query.CountAsync();
-        var items = await query
-            .OrderByDescending(p => p.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(p => new ProductResponse(
-                p.Uuid, p.Name, p.Description, p.Price, p.Stock,
-                p.Category != null ? p.Category.Uuid : null,
-                p.Category != null ? p.Category.Name : null,
-                p.CreatedAt, p.UpdatedAt))
-            .ToListAsync();
-
-        return ToPaged(items, total, page, pageSize);
+        return await ToCursorPageAsync(query, cursor, limit, ToResponse);
     }
 
     public async Task<ProductResponse> GetAsync(Guid uuid) =>
